@@ -1,48 +1,48 @@
-// Konfigurasi Variabel
-let map, pathLayer;
-let watchId = null;
-let pathCoordinates = [];
-let totalDistance = 0; // dalam KM
-let startTime = 0;
-let timerInterval = null;
+// --- 1. LOGIKA NAVIGASI TAB ---
+const navItems = document.querySelectorAll('.nav-item');
+const appViews = document.querySelectorAll('.app-view');
 
-// Referensi DOM UI
-const valDistance = document.getElementById('val-distance');
-const valPace = document.getElementById('val-pace');
-const valTime = document.getElementById('val-time');
-const btnStart = document.getElementById('btn-start');
-const btnStop = document.getElementById('btn-stop');
-
-// 1. Logika Splash Screen (STRAMAS)
-window.addEventListener('load', () => {
-    setTimeout(() => {
-        const splash = document.getElementById('splash-screen');
-        splash.style.opacity = '0';
-        setTimeout(() => {
-            splash.classList.add('hidden');
-            document.getElementById('main-app').classList.remove('hidden');
-            initMap(); // Muat peta setelah splash screen hilang
-        }, 500); // Sinkron dengan durasi transisi CSS
-    }, 2000); // Tahan opening selama 2 detik
+navItems.forEach(item => {
+    item.addEventListener('click', (e) => {
+        e.preventDefault();
+        
+        // Hapus status aktif dari semua tab & view
+        navItems.forEach(nav => nav.classList.remove('active'));
+        appViews.forEach(view => view.classList.remove('active'));
+        
+        // Aktifkan yang diklik
+        item.classList.add('active');
+        const targetId = item.getAttribute('data-target');
+        document.getElementById(targetId).classList.add('active');
+    });
 });
 
-// 2. Inisialisasi Peta (Leaflet.js)
-function initMap() {
-    // Set view awal (Default: koordinat Bandung jika GPS belum siap)
-    map = L.map('map').setView([-6.9147, 107.6098], 15);
-    
-    // Menggunakan tiles dari OpenStreetMap
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+// --- 2. LOGIKA KATEGORI OLAHRAGA ---
+const categories = document.querySelectorAll('.sport-categories span');
+categories.forEach(cat => {
+    cat.addEventListener('click', () => {
+        categories.forEach(c => c.classList.remove('active'));
+        cat.classList.add('active');
+    });
+});
 
-    // Persiapan garis jalur pelacakan (Polyline warna oranye STRAMAS)
-    pathLayer = L.polyline([], { color: '#fc4c02', weight: 5, opacity: 0.8 }).addTo(map);
-}
+// --- 3. LOGIKA TRACKING GPS REAL-TIME (BEBAS BUG) ---
+let watchId = null;
+let startTime = 0;
+let timerInterval = null;
+let totalDistance = 0; // dalam KM
+let lastPosition = null;
 
-// 3. Rumus Haversine untuk Mengukur Jarak GPS Presisi
+const distanceDisplay = document.getElementById('tracking-distance');
+const timeDisplay = document.getElementById('tracking-time');
+const paceDisplay = document.getElementById('tracking-pace');
+const btnStart = document.getElementById('btn-start-run');
+const btnStop = document.getElementById('btn-stop-run');
+const liveMetrics = document.getElementById('live-metrics');
+
+// Rumus Haversine Akurat
 function calculateDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371; // Radius bumi dalam KM
+    const R = 6371; 
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -52,50 +52,51 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     return R * c;
 }
 
-// 4. Update Format Waktu Stopwatch (HH:MM:SS)
-function updateTimer() {
+// Update UI Waktu & Pace
+function updateDashboard() {
     const now = Date.now();
-    const diff = new Date(now - startTime);
-    const h = String(diff.getUTCHours()).padStart(2, '0');
-    const m = String(diff.getUTCMinutes()).padStart(2, '0');
-    const s = String(diff.getUTCSeconds()).padStart(2, '0');
-    valTime.innerText = `${h}:${m}:${s}`;
+    const elapsedMs = now - startTime;
+    const elapsedSecs = Math.floor(elapsedMs / 1000);
     
-    updatePace(now - startTime);
+    // Format Waktu
+    const h = String(Math.floor(elapsedSecs / 3600)).padStart(2, '0');
+    const m = String(Math.floor((elapsedSecs % 3600) / 60)).padStart(2, '0');
+    const s = String(elapsedSecs % 60).padStart(2, '0');
+    timeDisplay.innerText = `${h}:${m}:${s}`;
+    
+    // Format Pace (Menit/KM)
+    if (totalDistance > 0.05) { // Hitung pace jika jarak > 50 meter
+        const elapsedMinutes = elapsedMs / 60000;
+        const pace = elapsedMinutes / totalDistance; 
+        const paceMin = Math.floor(pace);
+        const paceSec = String(Math.floor((pace - paceMin) * 60)).padStart(2, '0');
+        paceDisplay.innerText = `${paceMin}:${paceSec}`;
+    }
 }
 
-// 5. Kalkulasi Pace Lari (Menit per Kilometer)
-function updatePace(elapsedMs) {
-    if (totalDistance < 0.05) return; // Butuh minimal 50 meter agar Pace stabil
-    const elapsedMinutes = elapsedMs / 60000;
-    const pace = elapsedMinutes / totalDistance; 
-    
-    const paceMin = Math.floor(pace);
-    const paceSec = Math.floor((pace - paceMin) * 60);
-    valPace.innerText = `${paceMin}:${String(paceSec).padStart(2, '0')}`;
-}
-
-// 6. Logika Pelacakan GPS (Real-Time)
-function startTracking() {
+// Mulai Pelacakan
+btnStart.addEventListener('click', () => {
     if (!navigator.geolocation) {
-        alert("GPS tidak didukung di browser ini!");
+        alert("Sensor GPS tidak didukung di perangkat ini.");
         return;
     }
 
+    // Transisi UI
     btnStart.classList.add('hidden');
     btnStop.classList.remove('hidden');
+    liveMetrics.classList.remove('hidden');
 
-    // Reset Variabel
+    // Reset Data
     totalDistance = 0;
-    pathCoordinates = [];
-    pathLayer.setLatLngs([]);
-    valDistance.innerText = "0.00";
-    valPace.innerText = "0:00";
+    lastPosition = null;
+    distanceDisplay.innerHTML = `0.00 <span>km</span>`;
+    timeDisplay.innerText = "00:00:00";
+    paceDisplay.innerText = "0:00";
     
     startTime = Date.now();
-    timerInterval = setInterval(updateTimer, 1000);
+    timerInterval = setInterval(updateDashboard, 1000);
 
-    // Watch Position dengan High Accuracy
+    // Pengaturan Akurasi Maksimal GPS
     const options = {
         enableHighAccuracy: true,
         maximumAge: 0,
@@ -106,40 +107,34 @@ function startTracking() {
         (position) => {
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
-            const newPos = [lat, lng];
 
-            // Update Peta dan Garis
-            pathCoordinates.push(newPos);
-            pathLayer.setLatLngs(pathCoordinates);
-            map.panTo(newPos);
-
-            // Hitung Jarak jika titik sebelumnya ada
-            if (pathCoordinates.length > 1) {
-                const prev = pathCoordinates[pathCoordinates.length - 2];
-                const dist = calculateDistance(prev[0], prev[1], lat, lng);
+            if (lastPosition) {
+                const dist = calculateDistance(lastPosition.lat, lastPosition.lng, lat, lng);
                 totalDistance += dist;
-                valDistance.innerText = totalDistance.toFixed(2);
+                distanceDisplay.innerHTML = `${totalDistance.toFixed(2)} <span>km</span>`;
             }
+            
+            lastPosition = { lat, lng };
         },
-        (error) => {
-            console.warn("Kesalahan GPS:", error.message);
-        },
+        (error) => { console.warn("GPS Signal Error:", error.message); },
         options
     );
-}
+});
 
-function stopTracking() {
+// Hentikan Pelacakan
+btnStop.addEventListener('click', () => {
     if (watchId !== null) {
         navigator.geolocation.clearWatch(watchId);
         watchId = null;
     }
     clearInterval(timerInterval);
     
+    // Transisi UI kembali
     btnStop.classList.add('hidden');
     btnStart.classList.remove('hidden');
-    btnStart.innerText = "ULANGI LARI";
-}
-
-// Event Listeners Tombol
-btnStart.addEventListener('click', startTracking);
-btnStop.addEventListener('click', stopTracking);
+    
+    // Simpan data terakhir ke UI Kesehatan (Opsional, agar terintegrasi)
+    if(totalDistance > 0) {
+        document.querySelector('.grid-cards .card:first-child .card-value').innerHTML = `${totalDistance.toFixed(2)} <span>km</span>`;
+    }
+});

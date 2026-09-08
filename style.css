@@ -1,141 +1,151 @@
-/* Reset dan Base Setup */
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Helvetica Neue', Arial, sans-serif;
+    margin: 0; padding: 0; box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
-body, html {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    background-color: #f0f0f0;
+body {
+    background-color: #121212;
+    color: #ffffff;
+    overflow-x: hidden;
 }
 
-.hidden {
-    display: none !important;
+/* KONTROL VIEW */
+.app-view {
+    display: none;
+    padding: 20px;
+    padding-bottom: 90px;
+    min-height: 100vh;
 }
+.app-view.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-/* --- SPLASH SCREEN --- */
-#splash-screen {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background-color: #ffffff;
+header {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-    z-index: 9999;
-    transition: opacity 0.5s ease-out;
-}
-
-.logo-wrapper {
-    text-align: center;
-}
-
-.logo-stramas {
-    font-size: 3rem;
-    font-weight: 800;
-    color: #fc4c02; /* Warna Oranye Khas */
-    letter-spacing: 2px;
-    margin-bottom: 10px;
-}
-
-.loading-line {
-    width: 0;
-    height: 4px;
-    background-color: #fc4c02;
-    animation: loadingAnim 2s ease-in-out forwards;
-}
-
-@keyframes loadingAnim {
-    0% { width: 0%; }
-    100% { width: 100%; }
-}
-
-/* --- MAIN APP & PETA --- */
-#main-app {
-    width: 100%;
-    height: 100%;
-    position: relative;
-}
-
-#map {
-    width: 100%;
-    height: 100%;
-    z-index: 1; /* Peta di layer bawah */
-}
-
-/* --- DASHBOARD UI --- */
-.dashboard-panel {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background: #ffffff;
-    border-top-left-radius: 20px;
-    border-top-right-radius: 20px;
-    padding: 25px 20px;
-    box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
-    z-index: 100; /* Selalu di atas peta */
-}
-
-.metrics-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 15px;
     margin-bottom: 25px;
 }
+header h1 { font-size: 1.8rem; font-weight: 600; }
 
-.metric-card {
-    text-align: center;
+/* KESEHATAN TAB - ACTIVITY RINGS */
+.ring-container {
+    display: flex; align-items: center; gap: 20px;
+    background: #1c1c1e; padding: 20px;
+    border-radius: 20px; margin-bottom: 20px;
+}
+.activity-rings {
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: conic-gradient(#ff6b00 65%, #333 0);
+    position: relative;
+    display: flex; justify-content: center; align-items: center;
+}
+.activity-rings::before {
+    content: ''; width: 90px; height: 90px;
+    border-radius: 50%; background: #1c1c1e; position: absolute;
+}
+.activity-stats { font-size: 0.85rem; color: #aaa; }
+.activity-stats strong { color: #fff; font-size: 1.2rem; }
+.stat-item { margin-bottom: 10px; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+.dot.orange { background: #ff6b00; }
+.dot.green { background: #00ff00; }
+.dot.blue { background: #00e5ff; }
+
+/* PROMO BANNER */
+.promo-banner {
+    display: flex; justify-content: space-between; align-items: center;
+    background: #1c1c1e; padding: 15px 20px; border-radius: 15px; margin-bottom: 20px;
+}
+.text-orange { color: #ff6b00; font-weight: bold; margin-top: 5px; display: inline-block;}
+
+/* GRID CARDS */
+.grid-cards {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
+}
+.card {
+    background: #1c1c1e; padding: 15px; border-radius: 15px;
+}
+.card h4 { font-size: 0.95rem; margin-bottom: 5px; font-weight: 500; }
+.card .sub-text { font-size: 0.75rem; color: #888; margin-bottom: 15px; }
+.card-value { font-size: 1.8rem; font-weight: bold; }
+.card-value span { font-size: 1rem; color: #888; font-weight: normal; }
+.progress-bar-purple { height: 6px; background: linear-gradient(90deg, #8e2de2, #4a00e0); border-radius: 3px; margin-top: 10px; width: 60%; }
+.text-red { color: #ff3b30; font-size: 2rem; margin-top: 10px;}
+.text-blue { color: #5ac8fa; font-size: 2rem; margin-top: 10px;}
+
+/* OLAHRAGA TAB */
+.sport-categories {
+    display: flex; gap: 20px; overflow-x: auto;
+    padding-bottom: 10px; margin-bottom: 30px;
+    white-space: nowrap; scrollbar-width: none;
+}
+.sport-categories span {
+    color: #888; font-size: 1.1rem; padding-bottom: 5px; cursor: pointer;
+}
+.sport-categories span.active {
+    color: #ff6b00; font-weight: bold; border-bottom: 2px solid #ff6b00;
+}
+.tracking-display { text-align: center; margin-top: 50px; }
+.big-distance { font-size: 4.5rem; font-weight: 700; }
+.big-distance span { font-size: 1.5rem; color: #888; }
+.total-jarak { color: #888; margin-top: -10px; font-size: 0.9rem; }
+.live-metrics { display: flex; justify-content: space-around; margin-top: 40px; }
+.metric span { display: block; font-size: 2rem; font-weight: bold; }
+.metric label { font-size: 0.8rem; color: #888; }
+.hidden { display: none !important; }
+
+/* TOMBOL OLAHRAGA */
+.action-area {
+    display: flex; justify-content: center; align-items: center;
+    gap: 20px; position: absolute; bottom: 120px; left: 0; width: 100%;
+}
+.start-btn {
+    width: 90px; height: 90px; border-radius: 50%;
+    background: #ff6b00; color: white; border: none; font-size: 2rem;
+    box-shadow: 0 4px 15px rgba(255,107,0,0.4); cursor: pointer;
+}
+.stop-btn {
+    width: 90px; height: 90px; border-radius: 50%;
+    background: #ff3b30; color: white; border: none; font-size: 2rem;
+    box-shadow: 0 4px 15px rgba(255,59,48,0.4); cursor: pointer;
+}
+.small-btn {
+    width: 45px; height: 45px; border-radius: 50%;
+    background: #2c2c2e; color: #888; border: none; font-size: 1.2rem;
 }
 
-.metric-title {
-    display: block;
-    font-size: 0.8rem;
-    color: #666;
-    text-transform: uppercase;
-    font-weight: 600;
-    margin-bottom: 5px;
-}
+/* PERANGKAT & SAYA */
+.device-center { text-align: center; margin-top: 80px; padding: 0 20px; }
+.device-center h3 { margin: 20px 0 10px; }
+.device-center p { color: #888; font-size: 0.9rem; margin-bottom: 30px; }
+.btn-tambahkan { background: #ff6b00; color: white; border: none; padding: 15px 40px; border-radius: 25px; font-weight: bold; font-size: 1rem; width: 100%;}
+.text-gray { color: #3a3a3c; }
 
-.metric-value {
-    display: block;
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: #222;
+.profile-header { display: flex; align-items: center; gap: 15px; margin-bottom: 30px; }
+.avatar { width: 60px; height: 60px; background: #333; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; }
+.settings-list { list-style: none; }
+.settings-list li {
+    padding: 20px 0; border-bottom: 1px solid #2c2c2e;
+    display: flex; align-items: center; font-size: 1.1rem; position: relative;
 }
+.settings-list li i:first-child { width: 30px; font-size: 1.3rem; }
+.settings-list li .right { position: absolute; right: 0; color: #888; font-size: 1rem; }
+.text-purple { color: #bf5af2; }
+.red-dot { width: 8px; height: 8px; background: red; border-radius: 50%; position: absolute; right: 25px; }
 
-/* --- BUTTONS --- */
-.action-buttons {
-    display: flex;
-    justify-content: center;
+/* BOTTOM NAVIGATION */
+.bottom-nav {
+    position: fixed; bottom: 0; left: 0; width: 100%;
+    background: #1c1c1e; display: flex; justify-content: space-around;
+    padding: 15px 0 25px; border-top: 1px solid #2c2c2e; z-index: 100;
 }
-
-.btn-action {
-    width: 100%;
-    max-width: 300px;
-    padding: 16px;
-    font-size: 1.2rem;
-    font-weight: bold;
-    border: none;
-    border-radius: 50px;
-    cursor: pointer;
-    color: white;
-    text-transform: uppercase;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-    transition: transform 0.1s, background 0.3s;
+.nav-item {
+    text-decoration: none; color: #888; display: flex; flex-direction: column;
+    align-items: center; gap: 5px; font-size: 0.75rem;
 }
-
-.btn-action:active {
-    transform: scale(0.96);
-}
-
-.btn-action.start {
-    background-color: #fc4c02;
-}
-
-.btn-action.stop {
-    background-color: #222222;
-}
+.nav-item.active { color: #ff6b00; }
+.nav-item i { font-size: 1.3rem; }
