@@ -1,4 +1,13 @@
-// ================= NAVIGASI TAB =================
+// ================= 1. SPLASH SCREEN & INISIALISASI =================
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        const splash = document.getElementById('splash-screen');
+        splash.style.opacity = '0';
+        setTimeout(() => { splash.classList.add('hidden'); }, 500);
+    }, 2000);
+});
+
+// ================= 2. NAVIGASI TAB UTAMA =================
 const navItems = document.querySelectorAll('.nav-item');
 const appViews = document.querySelectorAll('.app-view');
 let mapInitialized = false;
@@ -13,7 +22,6 @@ navItems.forEach(item => {
         const targetId = item.getAttribute('data-target');
         document.getElementById(targetId).classList.add('active');
 
-        // Render ulang Map agar ukurannya pas ketika tab dibuka
         if (targetId === 'view-olahraga') {
             if (!mapInitialized) initMap();
             setTimeout(() => { map.invalidateSize(); }, 200);
@@ -21,21 +29,26 @@ navItems.forEach(item => {
     });
 });
 
-// ================= LOGIKA PETA (LEAFLET.JS) =================
+function goToOlahraga() {
+    navItems[1].click(); // Pindah ke tab olahraga
+}
+
+// ================= 3. LOGIKA MAP BEBAS API KEY & FITUR 3D =================
 let map, marker, pathLayer;
 let pathCoordinates = [];
+let is3DMode = false;
 
 function initMap() {
     map = L.map('map', { zoomControl: false }).setView([-6.200000, 106.816666], 15);
     
-    // Tema Peta Satelit / Gelap ala UI Lari
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        maxZoom: 19
+    // MENGGUNAKAN TILE OPENSTREETMAP (Gratis, No API KEY, No Watermark Error)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap'
     }).addTo(map);
 
     pathLayer = L.polyline([], { color: '#ff4500', weight: 6, opacity: 0.9 }).addTo(map);
     
-    // Custom Marker
     const icon = L.divIcon({ className: 'custom-marker', html: '<div style="background:#007AFF; width:20px; height:20px; border-radius:50%; border:3px solid white; box-shadow:0 0 10px rgba(0,0,0,0.5);"></div>', iconSize: [20, 20] });
     marker = L.marker([-6.200000, 106.816666], { icon: icon }).addTo(map);
 
@@ -43,28 +56,32 @@ function initMap() {
     checkGPS();
 }
 
+// Tombol Center
 document.getElementById('btn-recenter').addEventListener('click', () => {
-    if (pathCoordinates.length > 0) {
-        map.panTo(pathCoordinates[pathCoordinates.length - 1]);
+    if (pathCoordinates.length > 0) map.panTo(pathCoordinates[pathCoordinates.length - 1]);
+});
+
+// Fitur Map 3D
+document.getElementById('btn-3d').addEventListener('click', () => {
+    is3DMode = !is3DMode;
+    const mapEl = document.getElementById('map');
+    const btn = document.getElementById('btn-3d');
+    if (is3DMode) {
+        mapEl.classList.add('is-3d');
+        btn.style.background = '#ff6b00';
+    } else {
+        mapEl.classList.remove('is-3d');
+        btn.style.background = 'rgba(28, 28, 30, 0.9)';
     }
 });
 
-// ================= LOGIKA TRACKING REAL-TIME =================
-let isRunning = false;
-let watchId = null;
-let startTime = 0;
-let timerInterval = null;
-let totalDist = 0; // Kilometer
-let lastPos = null;
 
-// Referensi DOM
+// ================= 4. LOGIKA TRACKING LARI REAL-TIME =================
+let isRunning = false; let watchId = null; let startTime = 0; let timerInterval = null;
+let totalDist = 0; let lastPos = null;
+
 const btnRun = document.getElementById('btn-run-action');
 const gpsStatus = document.getElementById('gps-status');
-const valTime = document.getElementById('run-time');
-const valPace = document.getElementById('run-pace');
-const valDist = document.getElementById('run-dist');
-
-// Data Kesehatan Kumulatif
 let dataHealth = { steps: 0, cals: 0, duration: 0, distance: 0 };
 
 function checkGPS() {
@@ -74,18 +91,14 @@ function checkGPS() {
                 gpsStatus.innerHTML = '<i class="fa-solid fa-signal"></i> GPS Didapat';
                 gpsStatus.style.color = '#4cd964';
                 const initLoc = [pos.coords.latitude, pos.coords.longitude];
-                map.setView(initLoc, 17);
-                marker.setLatLng(initLoc);
+                map.setView(initLoc, 17); marker.setLatLng(initLoc);
             },
-            () => {
-                gpsStatus.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> GPS Lemah';
-                gpsStatus.style.color = '#ffcc00';
-            }, { enableHighAccuracy: true }
+            () => { gpsStatus.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> GPS Lemah'; gpsStatus.style.color = '#ffcc00'; }, 
+            { enableHighAccuracy: true }
         );
     }
 }
 
-// Rumus Haversine Akurat
 function calcDistance(lat1, lon1, lat2, lon2) {
     const R = 6371; const dLat = (lat2 - lat1) * Math.PI / 180; const dLon = (lon2 - lon1) * Math.PI / 180;
     const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
@@ -96,27 +109,24 @@ function updateTimer() {
     const elapsedSecs = Math.floor((Date.now() - startTime) / 1000);
     const m = String(Math.floor(elapsedSecs / 60)).padStart(2, '0');
     const s = String(elapsedSecs % 60).padStart(2, '0');
-    valTime.innerText = `${m}:${s}`;
+    document.getElementById('run-time').innerText = `${m}:${s}`;
     
-    if (totalDist > 0.01) { // Hitung pace jika jarak > 10m
+    if (totalDist > 0.01) {
         const pace = (elapsedSecs / 60) / totalDist;
-        const pMin = Math.floor(pace);
-        const pSec = String(Math.floor((pace - pMin) * 60)).padStart(2, '0');
-        valPace.innerText = `${pMin}'${pSec}"`;
+        const pMin = Math.floor(pace); const pSec = String(Math.floor((pace - pMin) * 60)).padStart(2, '0');
+        document.getElementById('run-pace').innerText = `${pMin}'${pSec}"`;
     }
 }
 
-// Tombol Play / Stop Ditekan
 btnRun.addEventListener('click', () => {
     if (!isRunning) {
-        // --- MULAI LARI ---
+        // Mulai Lari
         isRunning = true;
         btnRun.innerHTML = '<i class="fa-solid fa-stop"></i>';
         btnRun.classList.add('stop');
         
-        totalDist = 0; lastPos = null; pathCoordinates = [];
-        pathLayer.setLatLngs([]);
-        valDist.innerText = "0.00"; valTime.innerText = "00:00"; valPace.innerText = "-'--\"";
+        totalDist = 0; lastPos = null; pathCoordinates = []; pathLayer.setLatLngs([]);
+        document.getElementById('run-dist').innerText = "0.00"; 
         
         startTime = Date.now();
         timerInterval = setInterval(updateTimer, 1000);
@@ -125,65 +135,142 @@ btnRun.addEventListener('click', () => {
             const lat = pos.coords.latitude; const lng = pos.coords.longitude;
             const newPos = [lat, lng];
             
-            pathCoordinates.push(newPos);
-            pathLayer.setLatLngs(pathCoordinates);
-            marker.setLatLng(newPos);
-            map.panTo(newPos);
+            pathCoordinates.push(newPos); pathLayer.setLatLngs(pathCoordinates);
+            marker.setLatLng(newPos); map.panTo(newPos);
 
             if (lastPos) {
                 totalDist += calcDistance(lastPos.lat, lastPos.lng, lat, lng);
-                valDist.innerText = totalDist.toFixed(2);
+                document.getElementById('run-dist').innerText = totalDist.toFixed(2);
             }
             lastPos = { lat, lng };
         }, (err) => console.warn(err), { enableHighAccuracy: true, maximumAge: 0 });
 
     } else {
-        // --- BERHENTI LARI ---
+        // Stop Lari -> Muncul Modal Summary
         isRunning = false;
-        btnRun.innerHTML = '<i class="fa-solid fa-play"></i>';
-        btnRun.classList.remove('stop');
+        btnRun.innerHTML = '<i class="fa-solid fa-play"></i>'; btnRun.classList.remove('stop');
+        clearInterval(timerInterval); if (watchId) navigator.geolocation.clearWatch(watchId);
         
-        clearInterval(timerInterval);
-        if (watchId) navigator.geolocation.clearWatch(watchId);
+        const runCals = Math.round(totalDist * (userProfile.berat || 65)); // Kalori = Jarak x Berat
         
-        showSummary();
+        document.getElementById('sum-dist').innerText = totalDist.toFixed(2);
+        document.getElementById('sum-time').innerText = document.getElementById('run-time').innerText;
+        document.getElementById('sum-pace').innerText = document.getElementById('run-pace').innerText;
+        document.getElementById('sum-cal').innerText = runCals;
+        
+        // Simpan Data Ke Global
+        dataHealth.distance += totalDist;
+        dataHealth.steps += Math.round(totalDist * 1312);
+        dataHealth.cals += runCals;
+        dataHealth.duration += Math.floor((Date.now() - startTime) / 60000);
+
+        openModal('modal-summary');
     }
 });
 
-// ================= LOGIKA MODAL & KESEHATAN =================
-function showSummary() {
-    const elapsedMins = Math.floor((Date.now() - startTime) / 60000);
-    // Kalkulasi Kalori & Langkah yang Realistis
-    const runCals = Math.round(totalDist * 65); // Est: 65 kcal / km
-    const runSteps = Math.round(totalDist * 1312); // Est: 1312 langkah / km
-
-    // Tampilkan di Modal
-    document.getElementById('sum-dist').innerText = totalDist.toFixed(2);
-    document.getElementById('sum-time').innerText = valTime.innerText;
-    document.getElementById('sum-pace').innerText = valPace.innerText;
-    document.getElementById('sum-cal').innerText = runCals;
-    
-    // Update Data Global
-    dataHealth.distance += totalDist;
-    dataHealth.steps += runSteps;
-    dataHealth.cals += runCals;
-    dataHealth.duration += elapsedMins;
-
-    document.getElementById('modal-summary').classList.remove('hidden');
-}
-
 function closeSummary() {
-    document.getElementById('modal-summary').classList.add('hidden');
-    // Integrasikan data ke Dashboard Kesehatan
+    closeModal('modal-summary');
+    // Sinkronisasi ke UI Kesehatan
     document.getElementById('health-dist').innerText = dataHealth.distance.toFixed(2);
     document.getElementById('health-steps').innerText = dataHealth.steps;
     document.getElementById('health-cals').innerText = dataHealth.cals;
     document.getElementById('health-duration').innerText = dataHealth.duration;
     
-    // Reset display olahraga
-    valDist.innerText = "0.00"; valTime.innerText = "00:00"; valPace.innerText = "-:--";
+    // Reset layar lari
+    document.getElementById('run-dist').innerText = "0.00"; 
+    document.getElementById('run-time').innerText = "00:00"; 
+    document.getElementById('run-pace').innerText = "-:--";
 }
 
-// Fungsi Buka / Tutup Modal "SAYA" (Info, Notif, Tentang)
+// ================= 5. LOGIKA REGISTER SAYA & AVATAR =================
+let isRegistered = false;
+let userProfile = { nama: '', usia: 0, tinggi: 0, berat: 0, avatar: '' };
+
+function checkLogin(modalId) {
+    if(!isRegistered) {
+        alert("Silakan daftar terlebih dahulu dengan menekan tombol 'Masuk/Daftar' di bagian atas.");
+    } else {
+        openModal(modalId);
+    }
+}
+
+// Input Avatar menggunakan FileReader
+document.getElementById('input-avatar').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) { userProfile.avatar = e.target.result; }
+        reader.readAsDataURL(file);
+    }
+});
+
+function simpanProfil() {
+    const nama = document.getElementById('input-nama').value;
+    const usia = document.getElementById('input-usia').value;
+    const tinggi = document.getElementById('input-tinggi').value;
+    const berat = document.getElementById('input-berat-awal').value;
+
+    if(!nama || !usia || !tinggi || !berat) {
+        alert("Harap lengkapi semua data wajib!"); return;
+    }
+
+    userProfile.nama = nama; userProfile.usia = usia; 
+    userProfile.tinggi = tinggi; userProfile.berat = berat;
+    isRegistered = true;
+
+    // Update UI Profile
+    document.getElementById('profile-unlogged').classList.add('hidden');
+    document.getElementById('profile-logged').classList.remove('hidden');
+    document.getElementById('profile-name-display').innerText = nama;
+    
+    // Set Foto
+    if(userProfile.avatar) {
+        document.getElementById('profile-img').src = userProfile.avatar;
+    } else {
+        // Foto default jika tidak upload
+        document.getElementById('profile-img').src = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
+    }
+
+    // Update UI Kesehatan
+    document.getElementById('display-berat').innerText = berat;
+
+    // Update Modal Info Pribadi
+    document.getElementById('info-nama').innerText = nama;
+    document.getElementById('info-usia').innerText = usia;
+    document.getElementById('info-tinggi').innerText = tinggi;
+    document.getElementById('info-berat').innerText = berat;
+    
+    const bmi = (berat / Math.pow(tinggi/100, 2)).toFixed(1);
+    document.getElementById('info-bmi').innerText = bmi;
+
+    // Update Modal Notif target nama
+    document.getElementById('notif-nama-user').innerText = nama;
+    document.getElementById('notif-dot').classList.remove('hidden'); // Munculkan titik merah notif
+
+    closeModal('modal-register');
+}
+
+
+// ================= 6. INTERAKSI KESEHATAN (MODAL) =================
+function updateBerat() {
+    const val = document.getElementById('input-update-berat').value;
+    if(val) {
+        userProfile.berat = val;
+        document.getElementById('display-berat').innerText = val;
+        if(isRegistered) document.getElementById('info-berat').innerText = val;
+        closeModal('modal-berat');
+    }
+}
+
+function mulaiCekDetak() {
+    const hasil = document.getElementById('hasil-detak');
+    hasil.innerText = "Membaca...";
+    setTimeout(() => {
+        const randomBpm = Math.floor(Math.random() * (95 - 65 + 1)) + 65; // Simulasi 65-95 bpm
+        hasil.innerText = `${randomBpm} bpm`;
+    }, 2000);
+}
+
+// Fungsi Buka Tutup Global
 function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
 function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
