@@ -3,152 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Health & Run Tracker</title>
-    <!-- FontAwesome untuk Ikon -->
+    <title>STRAMAS - Pro Tracker</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- TAB 1: KESEHATAN -->
+
     <div id="view-kesehatan" class="app-view active">
-        <header>
-            <h1>Kesehatan</h1>
-        </header>
+        <header><h1>Kesehatan</h1></header>
         
         <div class="ring-container">
             <div class="activity-rings">
-                <div class="ring outer"></div>
-                <div class="ring middle"></div>
-                <div class="ring inner"></div>
+                <div class="ring outer"></div><div class="ring middle"></div><div class="ring inner"></div>
             </div>
             <div class="activity-stats">
-                <div class="stat-item"><span class="dot orange"></span> Langkah<br><strong>772</strong> /6000 langkah</div>
-                <div class="stat-item"><span class="dot green"></span> Kalori<br><strong>22</strong> /300 kcal</div>
-                <div class="stat-item"><span class="dot blue"></span> Durasi Olahraga<br><strong>0</strong> /30 menit</div>
+                <div class="stat-item"><span class="dot orange"></span> Langkah<br><strong id="health-steps">0</strong> /6000 langkah</div>
+                <div class="stat-item"><span class="dot green"></span> Kalori<br><strong id="health-cals">0</strong> /300 kcal</div>
+                <div class="stat-item"><span class="dot blue"></span> Durasi Olahraga<br><strong id="health-duration">0</strong> /30 menit</div>
             </div>
-        </div>
-
-        <div class="promo-banner">
-            <div>
-                <h3>Buat rencana olahraga pertama Anda!</h3>
-                <span class="text-orange">Buat</span>
-            </div>
-            <i class="fa-solid fa-person-running fa-2x"></i>
         </div>
 
         <div class="grid-cards">
             <div class="card">
                 <h4>Daftar Olahraga <i class="fa-solid fa-chevron-right"></i></h4>
                 <p class="sub-text">Hari ini</p>
-                <div class="card-value">2.01 <span>km</span></div>
+                <div class="card-value"><span id="health-dist">0.00</span> <span>km</span></div>
             </div>
             <div class="card">
                 <h4>Berat Badan</h4>
                 <p class="sub-text">Terakhir diperbarui</p>
-                <div class="card-value">48 <span>kg</span></div>
-                <div class="progress-bar-purple"></div>
-            </div>
-            <div class="card">
-                <h4>Detak Jantung</h4>
-                <p class="sub-text">Jaga agar jantung Anda tetap sehat</p>
-                <i class="fa-solid fa-heart-pulse text-red"></i>
-            </div>
-            <div class="card">
-                <h4>Tidur</h4>
-                <p class="sub-text">Tingkatkan kualitas tidur</p>
-                <i class="fa-solid fa-moon text-blue"></i>
+                <div class="card-value">65 <span>kg</span></div>
             </div>
         </div>
     </div>
 
-    <!-- TAB 2: OLAHRAGA (Fungsional Tracking GPS) -->
-    <div id="view-olahraga" class="app-view">
-        <header>
-            <h1>Olahraga</h1>
-        </header>
+    <div id="view-olahraga" class="app-view map-view">
+        <div id="map"></div>
         
-        <div class="sport-categories">
-            <span class="active">Berlari</span>
-            <span>Bersepeda</span>
-            <span>Berjalan kaki</span>
-            <span>Lompat tali</span>
-            <span>Sepakbola</span>
+        <div class="map-overlay-buttons">
+            <button class="map-btn"><i class="fa-solid fa-layer-group"></i></button>
+            <button class="map-btn">3D</button>
+            <button class="map-btn" id="btn-recenter"><i class="fa-solid fa-crosshairs"></i></button>
         </div>
 
-        <div class="tracking-display">
-            <div id="tracking-distance" class="big-distance">0.00 <span>km</span></div>
-            <div class="total-jarak">Total Jarak Berlari <i class="fa-solid fa-chevron-right"></i></div>
-            
-            <div class="live-metrics hidden" id="live-metrics">
-                <div class="metric">
-                    <span id="tracking-time">00:00:00</span>
-                    <label>Waktu</label>
+        <div class="run-dashboard">
+            <div class="gps-status" id="gps-status">
+                <i class="fa-solid fa-signal"></i> Mencari GPS...
+            </div>
+            <div class="run-stats">
+                <div class="stat-box">
+                    <h2 id="run-time">00:00</h2>
+                    <p>Waktu</p>
                 </div>
-                <div class="metric">
-                    <span id="tracking-pace">0:00</span>
-                    <label>Pace (min/km)</label>
+                <div class="stat-box">
+                    <h2 id="run-pace">-:--</h2>
+                    <p>Rata2 split (/km)</p>
+                </div>
+                <div class="stat-box">
+                    <h2 id="run-dist">0.00</h2>
+                    <p>Jarak (km)</p>
+                </div>
+            </div>
+            <div class="run-controls">
+                <div class="side-btn active-sport">
+                    <div class="icon-circle"><i class="fa-solid fa-shoe-prints"></i><span class="check"><i class="fa-solid fa-check"></i></span></div>
+                    <p>Berlari</p>
+                </div>
+                <button id="btn-run-action" class="play-btn"><i class="fa-solid fa-play"></i></button>
+                <div class="side-btn">
+                    <div class="icon-circle gray"><i class="fa-solid fa-route"></i></div>
+                    <p>Tambah Rute</p>
                 </div>
             </div>
         </div>
-
-        <div class="action-area">
-            <button class="small-btn"><i class="fa-solid fa-location-crosshairs"></i></button>
-            <button id="btn-start-run" class="start-btn"><i class="fa-solid fa-person-running"></i></button>
-            <button id="btn-stop-run" class="stop-btn hidden"><i class="fa-solid fa-stop"></i></button>
-            <button class="small-btn"><i class="fa-solid fa-gear"></i></button>
-        </div>
     </div>
 
-    <!-- TAB 3: PERANGKAT -->
-    <div id="view-perangkat" class="app-view">
-        <header>
-            <h1>Perangkat</h1>
-            <i class="fa-solid fa-expand top-right-icon"></i>
-        </header>
-        <div class="device-center">
-            <i class="fa-solid fa-watch fa-4x text-gray"></i>
-            <h3>Perangkat Cerdas Hanya untuk Anda</h3>
-            <p>Tidur, detak jantung, dan level oksigen darah... Akses cepat ke data kesehatan.</p>
-            <button class="btn-tambahkan">Tambahkan</button>
-        </div>
-    </div>
-
-    <!-- TAB 4: SAYA -->
     <div id="view-saya" class="app-view">
-        <header>
-            <h1>Saya</h1>
-        </header>
+        <header><h1>Saya</h1></header>
         <div class="profile-header">
             <div class="avatar"><i class="fa-solid fa-user"></i></div>
-            <h2>Masuk/Daftar</h2>
+            <h2>Pelari Aktif</h2>
         </div>
         <ul class="settings-list">
-            <li><i class="fa-solid fa-user text-orange"></i> Info Pribadi <i class="fa-solid fa-chevron-right right"></i></li>
-            <li><i class="fa-solid fa-bell text-purple"></i> Notifikasi <i class="fa-solid fa-chevron-right right"></i></li>
-            <li><i class="fa-solid fa-circle-info text-blue"></i> Tentang <div class="red-dot"></div> <i class="fa-solid fa-chevron-right right"></i></li>
+            <li onclick="openModal('modal-info')"><i class="fa-solid fa-user text-orange"></i> Info Pribadi <i class="fa-solid fa-chevron-right right"></i></li>
+            <li onclick="openModal('modal-notif')"><i class="fa-solid fa-bell text-purple"></i> Notifikasi <i class="fa-solid fa-chevron-right right"></i></li>
+            <li onclick="openModal('modal-tentang')"><i class="fa-solid fa-circle-info text-blue"></i> Tentang <i class="fa-solid fa-chevron-right right"></i></li>
         </ul>
     </div>
 
-    <!-- BOTTOM NAVIGATION -->
     <nav class="bottom-nav">
-        <a href="#" class="nav-item active" data-target="view-kesehatan">
-            <i class="fa-solid fa-heart"></i>
-            <span>Kesehatan</span>
-        </a>
-        <a href="#" class="nav-item" data-target="view-olahraga">
-            <i class="fa-solid fa-person-running"></i>
-            <span>Olahraga</span>
-        </a>
-        <a href="#" class="nav-item" data-target="view-perangkat">
-            <i class="fa-solid fa-clock"></i>
-            <span>Perangkat</span>
-        </a>
-        <a href="#" class="nav-item" data-target="view-saya">
-            <i class="fa-solid fa-user"></i>
-            <span>Saya</span>
-        </a>
+        <a href="#" class="nav-item active" data-target="view-kesehatan"><i class="fa-solid fa-heart"></i><span>Kesehatan</span></a>
+        <a href="#" class="nav-item" data-target="view-olahraga"><i class="fa-solid fa-person-running"></i><span>Olahraga</span></a>
+        <a href="#" class="nav-item" data-target="view-saya"><i class="fa-solid fa-user"></i><span>Saya</span></a>
     </nav>
 
+    <div id="modal-summary" class="modal-overlay hidden">
+        <div class="modal-content summary-content">
+            <h2>Lari Selesai! 🎉</h2>
+            <div class="summary-grid">
+                <div><h3 id="sum-dist">0.00</h3><p>Jarak (km)</p></div>
+                <div><h3 id="sum-time">00:00</h3><p>Waktu</p></div>
+                <div><h3 id="sum-pace">-:--</h3><p>Pace</p></div>
+                <div><h3 id="sum-cal">0</h3><p>Kalori (kcal)</p></div>
+            </div>
+            <button class="btn-close-modal" onclick="closeSummary()">Tutup & Simpan</button>
+        </div>
+    </div>
+
+    <div id="modal-info" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2>Info Pribadi</h2>
+            <div style="text-align: left; margin: 20px 0; line-height: 1.8;">
+                <p><strong>Nama:</strong> Pengguna Stramas</p>
+                <p><strong>Tinggi Badan:</strong> 170 cm</p>
+                <p><strong>Berat Badan:</strong> 65 kg</p>
+                <p><strong>Target Harian:</strong> 5.00 km</p>
+            </div>
+            <button class="btn-close-modal" onclick="closeModal('modal-info')">Kembali</button>
+        </div>
+    </div>
+
+    <div id="modal-notif" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2>Notifikasi</h2>
+            <div class="notif-box">
+                <i class="fa-solid fa-envelope"></i>
+                <p><strong>Pesan dari Admin:</strong><br>Selamat datang di pembaruan terbaru STRAMAS V2! Fitur pelacakan GPS kini bekerja secara real-time. Jangan lupa pemanasan sebelum berlari!</p>
+            </div>
+            <button class="btn-close-modal" onclick="closeModal('modal-notif')">Tutup</button>
+        </div>
+    </div>
+
+    <div id="modal-tentang" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2>Tentang STRAMAS</h2>
+            <p style="margin: 20px 0; color:#ccc;">STRAMAS adalah Web App pelacak aktivitas berlari tingkat lanjut. Menggunakan Geolocation API dan Leaflet Maps untuk memastikan pelacakan presisi. Didesain secara spesifik untuk memonitoring kecepatan, langkah, dan kalori secara akurat. <br><br>Versi: 2.0.1 (Stable Build)</p>
+            <button class="btn-close-modal" onclick="closeModal('modal-tentang')">Tutup</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
