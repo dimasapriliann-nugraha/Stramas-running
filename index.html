@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Stramas - Running Tracker</title>
+    <!-- Leaflet CSS untuk integrasi Peta -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Splash Screen Pembuka (Opening) -->
+    <div id="splash-screen">
+        <div class="logo-wrapper">
+            <h1 class="logo-stramas">STRAMAS</h1>
+            <div class="loading-line"></div>
+        </div>
+    </div>
+
+    <!-- Kontainer Utama Aplikasi -->
+    <div id="main-app" class="hidden">
+        <!-- Area Peta (Layer Bawah) -->
+        <div id="map"></div>
+        
+        <!-- Dashboard UI (Layer Atas/Overlay) -->
+        <div class="dashboard-panel">
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <span class="metric-title">Jarak (KM)</span>
+                    <span class="metric-value" id="val-distance">0.00</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-title">Pace (Min/KM)</span>
+                    <span class="metric-value" id="val-pace">0:00</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-title">Waktu</span>
+                    <span class="metric-value" id="val-time">00:00:00</span>
+                </div>
+            </div>
+            <div class="action-buttons">
+                <button id="btn-start" class="btn-action start">MULAI</button>
+                <button id="btn-stop" class="btn-action stop hidden">SELESAI</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Library Peta & Script Logika -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
