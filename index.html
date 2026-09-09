@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>STRAMAS - V4.0 Tracker</title>
+    <title>STRAMAS - V5.0 Tracker</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
@@ -18,21 +18,21 @@
     </div>
 
     <div id="view-kesehatan" class="app-view active">
-        <header><h1>STRAMAS</h1></header>
+        <header><h1>Kesehatan</h1></header>
         <div class="ring-container">
             <div class="activity-rings">
                 <div class="ring outer"></div><div class="ring middle"></div><div class="ring inner"></div>
             </div>
             <div class="activity-stats">
-                <div class="stat-item"><span class="dot orange"></span> Langkah<br><strong id="health-steps">0</strong> /6000 langkah</div>
+                <div class="stat-item"><span class="dot orange"></span> Langkah<br><strong id="health-steps">0</strong> /6000</div>
                 <div class="stat-item"><span class="dot green"></span> Kalori<br><strong id="health-cals">0</strong> /300 kcal</div>
                 <div class="stat-item"><span class="dot blue"></span> Durasi<br><strong id="health-duration">0</strong> /30 mnt</div>
             </div>
         </div>
-        <div class="promo-banner" onclick="openModal('modal-rencana')">
+        <div class="promo-banner" onclick="goToOlahraga()">
             <div>
-                <h3>Buat rencana olahraga pertama Anda!</h3>
-                <span class="text-orange">Buat</span>
+                <h3>Mulai berlari hari ini!</h3>
+                <span class="text-orange">Mulai</span>
             </div>
             <i class="fa-solid fa-person-running fa-2x"></i>
         </div>
@@ -50,13 +50,13 @@
             </div>
             <div class="card" onclick="openModal('modal-detak')">
                 <h4>Detak Jantung</h4>
-                <p class="sub-text">Cek detak jantung</p>
-                <i class="fa-solid fa-heart-pulse text-red"></i>
+                <p class="sub-text" id="display-detak-desc">Cek detak jantung</p>
+                <div class="card-value"><span id="display-detak-hasil" class="text-red"><i class="fa-solid fa-heart-pulse"></i></span></div>
             </div>
             <div class="card" onclick="openModal('modal-tidur')">
                 <h4>Tidur</h4>
                 <p class="sub-text">Analisis tidur Anda</p>
-                <i class="fa-solid fa-moon text-blue"></i>
+                <div class="card-value text-blue" id="display-tidur-hasil"><i class="fa-solid fa-moon"></i></div>
             </div>
         </div>
     </div>
@@ -68,6 +68,11 @@
             <button class="map-btn" onclick="openModal('modal-map-type')"><i class="fa-solid fa-layer-group"></i></button>
             <button class="map-btn" id="btn-3d">3D</button>
             <button class="map-btn" id="btn-recenter"><i class="fa-solid fa-crosshairs"></i></button>
+        </div>
+
+        <div id="route-info-banner" class="hidden">
+            <i class="fa-solid fa-route"></i> Ketuk lokasi di peta untuk titik tujuan
+            <button onclick="batalRute()" style="margin-left: 10px; background: #ff3b30; color:white; border:none; padding:3px 8px; border-radius:5px;">Batal</button>
         </div>
 
         <div class="run-dashboard">
@@ -85,8 +90,8 @@
                 
                 <button id="btn-run-action" class="play-btn"><i class="fa-solid fa-play"></i></button>
                 
-                <div class="side-btn">
-                    <div class="icon-circle gray"><i class="fa-solid fa-route"></i></div>
+                <div class="side-btn pointer" onclick="aktifkanModeRute()">
+                    <div class="icon-circle gray" id="icon-rute"><i class="fa-solid fa-route"></i></div>
                     <p>Rute</p>
                 </div>
             </div>
@@ -115,10 +120,7 @@
             <li onclick="openModal('modal-tentang')"><i class="fa-solid fa-circle-info text-blue"></i> Tentang <i class="fa-solid fa-chevron-right right"></i></li>
             <li onclick="openModal('modal-admin')"><i class="fa-brands fa-whatsapp text-green" style="color: #25D366;"></i> Hubungi Admin <i class="fa-solid fa-chevron-right right"></i></li>
         </ul>
-
-        <div class="footer-copyright">
-            Copyright by STRAMAS 2026
-        </div>
+        <div class="footer-copyright">Copyright by STRAMAS 2026</div>
     </div>
 
     <nav class="bottom-nav">
@@ -127,86 +129,68 @@
         <a href="#" class="nav-item" data-target="view-saya"><i class="fa-solid fa-user"></i><span>Saya</span></a>
     </nav>
 
-
     <div id="modal-map-type" class="modal-overlay hidden">
         <div class="modal-content bottom-sheet">
-            <div class="modal-header-flex">
-                <h3>Jenis peta</h3>
-                <i class="fa-solid fa-xmark pointer" onclick="closeModal('modal-map-type')"></i>
-            </div>
+            <div class="modal-header-flex"><h3>Jenis peta</h3><i class="fa-solid fa-xmark pointer" onclick="closeModal('modal-map-type')"></i></div>
             <div class="map-types-grid">
                 <div class="map-type-item active" onclick="changeMapLayer('default', this)">
-                    <div class="map-img-box" style="background: url('https://a.tile.openstreetmap.org/15/26078/17232.png') center/cover;"></div>
-                    <span>Default</span>
+                    <div class="map-img-box" style="background: url('https://a.tile.openstreetmap.org/15/26078/17232.png') center/cover;"></div><span>Default</span>
                 </div>
                 <div class="map-type-item" onclick="changeMapLayer('satelit', this)">
-                    <div class="map-img-box" style="background: url('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/15/17232/26078') center/cover;"></div>
-                    <span>Satelit</span>
+                    <div class="map-img-box" style="background: url('https://mt1.google.com/vt/lyrs=y&x=26078&y=17232&z=15') center/cover;"></div><span>Satelit (Label)</span>
                 </div>
                 <div class="map-type-item" onclick="changeMapLayer('medan', this)">
-                    <div class="map-img-box" style="background: url('https://a.tile.opentopomap.org/15/26078/17232.png') center/cover;"></div>
-                    <span>Medan</span>
+                    <div class="map-img-box" style="background: url('https://a.tile.opentopomap.org/15/26078/17232.png') center/cover;"></div><span>Medan</span>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="modal-target" class="modal-overlay hidden">
-        <div class="modal-content target-sheet">
-            <div class="modal-header-flex">
-                <i class="fa-solid fa-arrow-left pointer" onclick="closeModal('modal-target')"></i>
-                <h3>Tetapkan target</h3>
-                <span></span>
+    <div id="modal-detak" class="modal-overlay hidden">
+        <div class="modal-content text-center">
+            <h2>Pindai Detak Jantung</h2>
+            <p style="color:#aaa; font-size:0.85rem; margin-top:10px;">Tempelkan HP ke dada Anda (atau tahan layar di dalam lingkaran ini) selama 5 detik.</p>
+            
+            <div class="heart-touch-zone" id="heart-touch-zone">
+                <i class="fa-solid fa-fingerprint fa-2x" style="color: #444; position:absolute; top:-20px;"></i>
+                <i class="fa-solid fa-heart fa-4x text-red" id="heart-icon-scan"></i>
+                <svg class="progress-ring" height="120" width="120">
+                    <circle class="progress-ring__circle" stroke="#ff6b00" stroke-width="6" fill="transparent" r="54" cx="60" cy="60"/>
+                </svg>
             </div>
-            <div class="target-display-area">
-                <p style="color:#aaa; margin-bottom: 15px;">Target Jarak <i class="fa-solid fa-caret-down"></i></p>
-                <div class="target-controls">
-                    <button class="round-btn" onclick="adjTarget(-1)"><i class="fa-solid fa-minus"></i></button>
-                    <h1 id="target-value">2</h1>
-                    <button class="round-btn" onclick="adjTarget(1)"><i class="fa-solid fa-plus"></i></button>
+            
+            <h1 id="hasil-detak" style="margin-top: 15px;">-- bpm</h1>
+            <p id="detak-status" style="color:#aaa; font-size:0.8rem; margin-bottom: 20px;">Menunggu sentuhan...</p>
+            <button class="btn-primary" onclick="closeModal('modal-detak')">Tutup & Simpan</button>
+        </div>
+    </div>
+
+    <div id="modal-tidur" class="modal-overlay hidden">
+        <div class="modal-content text-left">
+            <h2>Data Tidur</h2>
+            <p style="color:#aaa; font-size:0.85rem; margin-bottom:15px;">Masukkan waktu tidur Anda untuk menghitung kualitas istirahat.</p>
+            <div class="form-group-row">
+                <div style="width:50%;">
+                    <label style="color:#888; font-size:0.8rem;">Jam Tidur</label>
+                    <input type="time" id="tidur-mulai" class="large-input" value="22:00">
                 </div>
-                <p style="color:#888;">km</p>
+                <div style="width:50%;">
+                    <label style="color:#888; font-size:0.8rem;">Jam Bangun</label>
+                    <input type="time" id="tidur-bangun" class="large-input" value="06:00">
+                </div>
             </div>
-            <div class="target-presets">
-                <button class="preset-btn" onclick="setTargetVal(3)">3 km</button>
-                <button class="preset-btn" onclick="setTargetVal(5)">5 km</button>
-                <button class="preset-btn" onclick="setTargetVal(10)">10 km</button>
-                <button class="preset-btn" onclick="setTargetVal(15)">15 km</button>
-                <button class="preset-btn" onclick="setTargetVal(21.1)">Setengah Maraton</button>
-                <button class="preset-btn" onclick="setTargetVal(42.2)">Maraton Penuh</button>
-            </div>
-            <button class="btn-primary" style="margin-top: 30px;" onclick="mulaiTarget()">Mulai</button>
+            <button class="btn-primary" onclick="simpanTidur()">Hitung & Simpan</button>
+            <button class="btn-secondary" onclick="closeModal('modal-tidur')">Batal</button>
         </div>
     </div>
 
-    <div id="modal-target-reached" class="modal-overlay hidden">
-        <div class="modal-content">
-            <i class="fa-solid fa-flag-checkered fa-3x text-orange" style="margin-bottom:15px;"></i>
-            <h2>Berhenti, sudah mencapai batas!</h2>
-            <p style="color:#aaa; font-size:0.9rem; margin:15px 0;">Anda telah menempuh target jarak yang ditentukan.</p>
-            <div class="form-group-row">
-                <button class="btn-secondary" onclick="stopRunFromTarget()" style="border-color:#ff3b30; color:#ff3b30;">Stop</button>
-                <button class="btn-primary" onclick="lanjutRun()">Lanjut Lari</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-admin" class="modal-overlay hidden">
-        <div class="modal-content">
-            <i class="fa-brands fa-whatsapp fa-3x" style="color: #25D366; margin-bottom:15px;"></i>
-            <h2>Hubungi Admin?</h2>
-            <p style="color:#aaa; font-size:0.9rem; margin:15px 0;">Anda akan langsung diarahkan ke aplikasi WhatsApp untuk menghubungi layanan pengguna.</p>
-            <div class="form-group-row">
-                <button class="btn-primary" onclick="hubungiAdmin()">Iyaa</button>
-                <button class="btn-secondary" onclick="closeModal('modal-admin')">Enggak</button>
-            </div>
-        </div>
-    </div>
-
+    <div id="modal-target" class="modal-overlay hidden"><div class="modal-content target-sheet"><div class="modal-header-flex"><i class="fa-solid fa-arrow-left pointer" onclick="closeModal('modal-target')"></i><h3>Tetapkan target</h3><span></span></div><div class="target-display-area"><p style="color:#aaa; margin-bottom: 15px;">Target Jarak <i class="fa-solid fa-caret-down"></i></p><div class="target-controls"><button class="round-btn" onclick="adjTarget(-1)"><i class="fa-solid fa-minus"></i></button><h1 id="target-value">2</h1><button class="round-btn" onclick="adjTarget(1)"><i class="fa-solid fa-plus"></i></button></div><p style="color:#888;">km</p></div><div class="target-presets"><button class="preset-btn" onclick="setTargetVal(3)">3 km</button><button class="preset-btn" onclick="setTargetVal(5)">5 km</button><button class="preset-btn" onclick="setTargetVal(10)">10 km</button><button class="preset-btn" onclick="setTargetVal(15)">15 km</button><button class="preset-btn" onclick="setTargetVal(21.1)">Setengah Maraton</button><button class="preset-btn" onclick="setTargetVal(42.2)">Maraton Penuh</button></div><button class="btn-primary" style="margin-top: 30px;" onclick="mulaiTarget()">Mulai</button></div></div>
+    <div id="modal-target-reached" class="modal-overlay hidden"><div class="modal-content"><i class="fa-solid fa-flag-checkered fa-3x text-orange" style="margin-bottom:15px;"></i><h2>Berhenti, mencapai batas!</h2><p style="color:#aaa; font-size:0.9rem; margin:15px 0;">Anda telah menempuh target jarak.</p><div class="form-group-row"><button class="btn-secondary" onclick="stopRunFromTarget()" style="border-color:#ff3b30; color:#ff3b30;">Stop</button><button class="btn-primary" onclick="lanjutRun()">Lanjut Lari</button></div></div></div>
+    <div id="modal-admin" class="modal-overlay hidden"><div class="modal-content"><i class="fa-brands fa-whatsapp fa-3x" style="color: #25D366; margin-bottom:15px;"></i><h2>Hubungi Admin?</h2><p style="color:#aaa; font-size:0.9rem; margin:15px 0;">Diarahkan ke aplikasi WhatsApp untuk menghubungi layanan.</p><div class="form-group-row"><button class="btn-primary" onclick="hubungiAdmin()">Iyaa</button><button class="btn-secondary" onclick="closeModal('modal-admin')">Enggak</button></div></div></div>
     <div id="modal-register" class="modal-overlay hidden"><div class="modal-content form-content"><h2>Lengkapi Profil Anda</h2><div class="form-group"><label>Foto Profil:</label><input type="file" id="input-avatar" accept="image/*" class="file-input"></div><div class="form-group"><input type="text" id="input-nama" placeholder="Nama Lengkap" required></div><div class="form-group-row"><input type="number" id="input-usia" placeholder="Usia (thn)" required><input type="number" id="input-tinggi" placeholder="Tinggi (cm)" required><input type="number" id="input-berat-awal" placeholder="Berat (kg)" required></div><button class="btn-primary" onclick="simpanProfil()">Simpan</button><button class="btn-secondary" onclick="closeModal('modal-register')">Batal</button></div></div>
     <div id="modal-info" class="modal-overlay hidden"><div class="modal-content"><h2>Info Pribadi</h2><div class="info-list"><p><strong>Nama:</strong> <span id="info-nama">-</span></p><p><strong>Usia:</strong> <span id="info-usia">-</span> Tahun</p><p><strong>Tinggi:</strong> <span id="info-tinggi">-</span> cm</p><p><strong>Berat:</strong> <span id="info-berat">-</span> kg</p><p><strong>BMI:</strong> <span id="info-bmi">-</span></p></div><button class="btn-primary" onclick="closeModal('modal-info')">Tutup</button></div></div>
-    <div id="modal-notif" class="modal-overlay hidden"><div class="modal-content text-left"><h2>Notifikasi</h2><div class="notif-box"><i class="fa-solid fa-envelope text-orange"></i><p><strong>Admin Stramas:</strong><br>Pembaruan V4 berhasil diinstal. Coba fitur Map Satelit, Set Target Jarak, dan Kontak Admin. Selamat berlari!</p></div><button class="btn-primary" onclick="closeModal('modal-notif')">Tutup</button></div></div>
-    <div id="modal-tentang" class="modal-overlay hidden"><div class="modal-content"><h2>Tentang STRAMAS</h2><p style="margin: 20px 0; color:#ccc;">Web App pelacak lari presisi tinggi. Menggunakan Geolocation murni tanpa API berbayar.<br><br><strong class="text-orange">Versi: 4.0 Ultimate</strong><br>Copyright 2026</p><button class="btn-primary" onclick="closeModal('modal-tentang')">Tutup</button></div></div>
+    <div id="modal-notif" class="modal-overlay hidden"><div class="modal-content text-left"><h2>Notifikasi</h2><div class="notif-box"><i class="fa-solid fa-envelope text-orange"></i><p><strong>Admin Stramas:</strong><br>Pembaruan V5 Ultimate terpasang. Map satelit dengan label, Navigasi Rute, Sensor Detak Dada, & Jam Tidur siap digunakan!</p></div><button class="btn-primary" onclick="closeModal('modal-notif')">Tutup</button></div></div>
+    <div id="modal-tentang" class="modal-overlay hidden"><div class="modal-content"><h2>Tentang STRAMAS</h2><p style="margin: 20px 0; color:#ccc;">Web App pelacak lari presisi tinggi. Menggunakan Geolocation murni, OpenRouteService, Google Hybrid.<br><br><strong class="text-orange">Versi: 5.0 Ultimate</strong><br>Copyright 2026</p><button class="btn-primary" onclick="closeModal('modal-tentang')">Tutup</button></div></div>
     <div id="modal-summary" class="modal-overlay hidden"><div class="modal-content summary-content"><h2>Lari Selesai! 🎉</h2><div class="summary-grid"><div><h3 id="sum-dist">0.00</h3><p>Jarak (km)</p></div><div><h3 id="sum-time">00:00</h3><p>Waktu</p></div><div><h3 id="sum-pace">-:--</h3><p>Pace</p></div><div><h3 id="sum-cal">0</h3><p>Kalori</p></div></div><button class="btn-primary" onclick="closeSummary()">Tutup & Simpan</button></div></div>
     
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
