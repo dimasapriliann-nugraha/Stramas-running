@@ -307,6 +307,6 @@ function simpanProfil() {
     document.getElementById('info-bmi').innerText = (berat / Math.pow(tinggi/100, 2)).toFixed(1);
     document.getElementById('notif-dot').classList.remove('hidden'); closeModal('modal-register');
 }
-function hubungiAdmin() { closeModal('modal-admin'); window.open('https://wa.me/6281234567890?text=Halo%20Admin%20Stramas,%20saya%20butuh%20bantuan.', '_blank'); }
+function hubungiAdmin() { closeModal('modal-admin'); window.open('https://wa.me/6285794249679?text=Halo%20Admin%20Stramas,%20saya%20butuh%20bantuan.', '_blank'); }
 function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
 function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
